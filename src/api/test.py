@@ -1,5 +1,5 @@
 import requests
-
+import pandas as pd
 # URL of the API
 url = "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/base-des-diagnostics-de-performance-energetique-dpe-des-batiments-non-residentie/records"
 params = {
@@ -18,10 +18,17 @@ if __name__ == "__main__":
 
     # Make GET request
     response = requests.get(url, headers=headers, params=params)
-
-    # Check if request was successful
+    
     if response.status_code == 200:
         data = response.json()
-        print(data)
+        
+        # Extract the actual records from the JSON
+        records = [record['results']['fields'] for record in data['results']]
+        
+        # Convert to Pandas DataFrame
+        df = pd.DataFrame(records)
+        
+        # Display the DataFrame
+        print(df)
     else:
         print(f"Request failed with status code: {response.status_code}")
