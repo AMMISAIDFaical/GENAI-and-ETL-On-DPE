@@ -75,7 +75,7 @@ def example_astronauts():
         return list_of_people_in_space
 
     @task
-    def print_astronaut_craft(greeting: str, person_in_space: dict) -> None:
+    def print_astronaut_crafts_model(greeting: str, person_in_space: dict) -> None:
         """
         This task creates a print statement with the name of an
         Astronaut in space and the craft they are flying on from
@@ -89,7 +89,7 @@ def example_astronauts():
 
     # Use dynamic task mapping to run the print_astronaut_craft task for each
     # Astronaut in space
-    print_astronaut_craft.partial(greeting="Hello! :)").expand(
+    print_astronaut_crafts_model.partial(greeting="Hello! :)").expand(
         person_in_space=get_astronauts()  # Define dependencies using TaskFlow API syntax
     )
 
