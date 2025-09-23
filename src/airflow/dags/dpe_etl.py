@@ -93,25 +93,45 @@ def dpe_etl_pipeline():
     @task
     def load_dpe_records(transform_dpe_records_result: pd.DataFrame):
         """
-        store in sql lite transformed data.
+        Store in SQLite transformed data with explicit commit.
         """
         # Pull the connection
         dpe_database_hook = SqliteHook("dpe_database_conn")
-        dpe_database_conn = dpe_database_hook.get_sqlalchemy_engine()
-        # Load the table to Postgres, replace if it exists
-        transform_dpe_records_result.to_sql(
-            name="dpe_data",
-            con=dpe_database_conn,
-            if_exists="append",
-            index=False
-        )
-        print(dpe_database_hook.get_records("SELECT * FROM dpe_data;"))
-
+        
+        # Get raw connection for explicit commit
+        conn = dpe_database_hook.get_conn()
+        
+        try:
+            # Load the table using pandas
+            transform_dpe_records_result.to_sql(
+                name="dpe_data",
+                con=conn,
+                if_exists="append",
+                index=False
+            )
+            
+            # EXPLICIT COMMIT - This is crucial!
+            conn.commit()
+            
+            print(f"✅ Successfully loaded {len(transform_dpe_records_result)} records")
+            
+            # Verify data was written
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM dpe_data;")
+            count = cursor.fetchone()[0]
+            print(f"📊 Total records in database: {count}")
+            
+        except Exception as e:
+            print(f"❌ Error loading data: {e}")
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+    
     # Define task dependencies
     raw_dpe_records = extract_dpe_records()
     transform_dpe_records_result = transform_dpe_records(raw_dpe_records)
     load_dpe_records(transform_dpe_records_result)
-
 
 # Instantiate the DAG
 dpe_etl = dpe_etl_pipeline()
