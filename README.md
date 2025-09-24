@@ -44,7 +44,13 @@ Trigger the DAG dpe_etl_pipeline manually (test)
 ### Airflow DAG
 ![Airflow DAG Screenshot](dag_on_airflow_ui.png)
 
-### checking out postgresql data loading
+### on the airflow ui
+set up the postgres connection admin> connections
+![Airflow DAG Screenshot](postgresql_connnection.png)
+
+
+### back to the cli
+double check if all records are in the postgres sql that last dag's task created
 ![Airflow DAG Screenshot](cli_postgresql.png)
 
 
