@@ -14,6 +14,7 @@ import pandas as pd
 import os
 from typing import List, Dict
 from airflow.providers.sqlite.hooks.sqlite import SqliteHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 
 # API Configuration
@@ -89,45 +90,34 @@ def dpe_etl_pipeline():
 
         return df   # ✅ Return the actual DataFrame
 
-
     @task
     def load_dpe_records(transform_dpe_records_result: pd.DataFrame):
         """
-        Store in SQLite transformed data with explicit commit.
+        Load transformed data into Postgres using pandas.to_sql.
+        Creates table automatically if it does not exist.
         """
-        # Pull the connection
-        dpe_database_hook = SqliteHook("dpe_database_conn")
+        postgres_hook = PostgresHook(postgres_conn_id="postgres_dpe_conn")
         
-        # Get raw connection for explicit commit
-        conn = dpe_database_hook.get_conn()
-        
-        try:
-            # Load the table using pandas
-            transform_dpe_records_result.to_sql(
-                name="dpe_data",
-                con=conn,
-                if_exists="append",
-                index=False
-            )
-            
-            # EXPLICIT COMMIT - This is crucial!
-            conn.commit()
-            
-            print(f"✅ Successfully loaded {len(transform_dpe_records_result)} records")
-            
-            # Verify data was written
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM dpe_data;")
-            count = cursor.fetchone()[0]
-            print(f"📊 Total records in database: {count}")
-            
-        except Exception as e:
-            print(f"❌ Error loading data: {e}")
-            conn.rollback()
-            raise
-        finally:
-            conn.close()
-    
+        # ✅ Use SQLAlchemy engine instead of psycopg2 conn
+        engine = postgres_hook.get_sqlalchemy_engine()
+        print(f"SQLAlchemy Engine: {engine}")
+        # # Write DataFrame to Postgres (creates table if not exists)
+        # from sqlalchemy import create_engine
+        # engine = create_engine('postgresql://username:password@localhost:5432/mydatabase')
+        transform_dpe_records_result.to_sql('dpe_data', engine)
+
+        # transform_dpe_records_result.to_sql(
+        #     name="dpe_data",
+        #     con=engine,
+        #     if_exists="append",   # don't overwrite existing
+        #     index=False
+        # )
+        print("Data loaded into Postgres successfully.")
+        # # Log results
+        with engine.connect() as conn:
+            total_count = conn.execute("SELECT COUNT(*) FROM dpe_data;").scalar()
+        print(f"✅ Loaded {len(transform_dpe_records_result)} records. 📊 Total in DB: {total_count}")
+
     # Define task dependencies
     raw_dpe_records = extract_dpe_records()
     transform_dpe_records_result = transform_dpe_records(raw_dpe_records)
