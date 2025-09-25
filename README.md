@@ -1,7 +1,9 @@
 # GENAI-and-ETL-On-DPE
 An **ETL pipeline built with Apache Airflow** that extracts, transforms, and loads **Diagnostics de Performance Energétique (DPE)** data from the [OpenDataSoft API](https://public.opendatasoft.com/explore/dataset/base-des-diagnostics-de-performance-energetique-dpe-des-batiments-non-residentie/) into a **PostgreSQL database**.
 
-This project demonstrates how to orchestrate data workflows with Airflow, use Python for data cleaning, and persist data for analytics.
+Disclaimer: This repository is just a demonstration of what is possible with LangGraph agents and Open WebUI integration. It will not be actively maintained.
+
+This repo will teach you how to: Orchestrate data workflows with Airflow, use Python for data cleaning, and persist data for analytics.
 ---
 
 ## Overview
